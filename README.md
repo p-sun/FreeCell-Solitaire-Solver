@@ -1,11 +1,11 @@
 # FreeCell-Solitaire-Solver
 A FreeCell Solitaire solver written in Swift. 
 
-I was playing FreeCell Solitare on [YouTube Playables](https://www.youtube.com/playables/Ugkxbnpb-Zfu90iTv-d_1rZA5kUiiZwUz5U3), and thought, "I wonder if I can write an algorithm to solve this?". The answer was yes! I've used these instructions to solve a deck. Like the game of solitare, this was a fun excercise in recursion and logic deduction. 
+I was playing FreeCell Solitare on [YouTube Playables](https://www.youtube.com/playables/Ugkxbnpb-Zfu90iTv-d_1rZA5kUiiZwUz5U3), and thought, "I wonder if I can write an algorithm to solve this?". The answer was yes! Like the game of solitare, this was a fun excercise in recursion and logic deduction. 
 
 Most of the solver logic are in `BoardBuilder` and `Board` classes.
 
-Potential next steps:
+## Potential next steps:
 - Rewrite the search with BFS to find a solve with the fewest number of moves.
 - For the BFS solve Prioritize solving boards with more cards in-order and already moved to the foundation.
 - Refactor BoardBuilder and Board with shorter functions.
@@ -13,7 +13,11 @@ Potential next steps:
 - Test more decks.
 - Write a test to generate small games with valid moves, to find games this solver can't solve. Compare my solver's solution with generated moves to find more logical shortcuts that we can use to prioritize certain moves, or skip exploring certain moves earlier.
 
-See `FreeCellSolitareTest` for tests on specific deck combinations. The solver prints text to indicate the solution.
+# Test Deck
+
+See [`FreeCellSolitareTest`](https://github.com/p-sun/FreeCell-Solitaire-Solver/blob/7ce07e5f39cb1bba83db589bd6acd731b48fd4ea/SolitaireTests/FreeCellSolitareTest.swift#L200) for the test on this deck. The solver prints the following text, which was tested on a real game.
+
+<img src="https://github.com/user-attachments/assets/135308a6-3cea-4d1d-9b35-467b2ff8399a" width="600">
 
 ```
 +++++++ Solution has 121 moves +++++++
