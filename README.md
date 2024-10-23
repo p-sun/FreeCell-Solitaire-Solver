@@ -3,19 +3,20 @@ A FreeCell Solitaire solver written in Swift.
 
 I was playing FreeCell Solitare on [YouTube Playables](https://www.youtube.com/playables/Ugkxbnpb-Zfu90iTv-d_1rZA5kUiiZwUz5U3), and thought, "I wonder if I can write an algorithm to solve this?". The answer was yes! Like the game of solitare, this was a fun excercise in recursion and logic deduction. 
 
-Most of the solver logic are in `BoardBuilder` and `Board` classes.
+Most of the solver logic are in [SolitareSolver.swift](https://github.com/p-sun/FreeCell-Solitaire-Solver/blob/main/Solitaire/SolitareSolver.swift).
 
 ## Potential next steps:
 - Rewrite the search with BFS to find a solve with the fewest number of moves.
 - For the BFS solve Prioritize solving boards with more cards in-order and already moved to the foundation.
-- Refactor BoardBuilder and Board with shorter functions.
+- Refactor Board and SolitareSolver with shorter functions.
+- Refactor move and the hashableBoard into a step struct.
 - Build a the UI for a Solitaire game.
 - Test more decks.
 - Write a test to generate small games with valid moves, to find games this solver can't solve. Compare my solver's solution with generated moves to find more logical shortcuts that we can use to prioritize certain moves, or skip exploring certain moves earlier.
 
 # Test Deck
 
-See [`FreeCellSolitareTest`](https://github.com/p-sun/FreeCell-Solitaire-Solver/blob/7ce07e5f39cb1bba83db589bd6acd731b48fd4ea/SolitaireTests/FreeCellSolitareTest.swift#L200) for the test on this deck. The solver prints the following text, which was tested on a real game.
+See [`FreeCellSolitareTest`](https://github.com/p-sun/FreeCell-Solitaire-Solver/blob/7ce07e5f39cb1bba83db589bd6acd731b48fd4ea/SolitaireTests/FreeCellSolitareTest.swift#L200)'s `testSolve_fullDeck()` for the test on this deck. The solver prints the following text, which was tested on a real game.
 
 <img src="https://github.com/user-attachments/assets/135308a6-3cea-4d1d-9b35-467b2ff8399a" width="600">
 
@@ -57,18 +58,18 @@ Columns:
 >>> 6) Move Column7 2♡ onto Column2 3♠ : 1 cards
 >>> 7) Automove Column7 1♣ => Foundation
 >>> 8) Automove Column7 1♠ => Foundation
->>> 9) Move Column0 10♢ onto Column4 empty : 1 cards
+>>> 9) Move Column0 10♢ onto Column4 Empty : 1 cards
 >>> 10) Move Column3 12♣ onto Column0 13♡ : 2 cards
 >>> 11) Move Column3 6♢ => FreeCell
 >>> 12) Move Column4 10♢ onto Column3 11♠ : 1 cards
->>> 13) Move FreeCell 6♢ => <4>
+>>> 13) Move FreeCell 6♢ => Column4
 >>> 14) Move Column6 9♡ => FreeCell
 >>> 15) Move Column6 12♡ => FreeCell
 >>> 16) Move Column6 10♣ onto Column0 11♡ : 1 cards
->>> 17) Move FreeCell 9♡ => <0>
+>>> 17) Move FreeCell 9♡ => Column0
 >>> 18) Move Column6 5♠ onto Column4 6♢ : 1 cards
 >>> 19) Automove Column6 1♢ => Foundation
->>> 20) Move FreeCell 12♡ => <6>
+>>> 20) Move FreeCell 12♡ => Column6
 >>> 21) Move Column3 11♠ onto Column6 12♡ : 2 cards
 >>> 22) Move Column3 7♢ => FreeCell
 >>> 23) Move Column3 11♣ => FreeCell
@@ -77,43 +78,43 @@ Columns:
 >>> 26) Move Column7 10♡ => FreeCell
 >>> 27) Automove Column7 2♠ => Foundation
 >>> 28) Move Column7 8♡ onto Column6 9♠ : 1 cards
->>> 29) Move FreeCell 11♣ => <7>
->>> 30) Move FreeCell 10♡ => <7>
+>>> 29) Move FreeCell 11♣ => Column7
+>>> 30) Move FreeCell 10♡ => Column7
 >>> 31) Move Column2 2♡ => FreeCell
 >>> 32) Move Column2 3♠ => Foundation
 >>> 33) Move Column5 11♢ => FreeCell
 >>> 34) Move Column5 4♠ => Foundation
->>> 35) Move Column5 8♢ onto Column3 empty : 1 cards
+>>> 35) Move Column5 8♢ onto Column3 Empty : 1 cards
 >>> 36) Automove Column5 1♡ => Foundation
->>> 37) Automove 2♡ : FreeCell => Foundation
+>>> 37) Automove FreeCell 2♡ => Foundation
 >>> 38) Move Column7 11♣ onto Column5 12♢ : 2 cards
->>> 39) Move FreeCell 7♢ => <7>
+>>> 39) Move FreeCell 7♢ => Column7
 >>> 40) Move Column1 6♣ onto Column7 7♢ : 3 cards
 >>> 41) Move Column2 4♡ => FreeCell
 >>> 42) Move Column2 5♣ => FreeCell
 >>> 43) Move Column4 4♢ => FreeCell
 >>> 44) Move Column4 5♠ => Foundation
->>> 45) Move FreeCell 5♣ => <4>
->>> 46) Move FreeCell 4♡ => <4>
+>>> 45) Move FreeCell 5♣ => Column4
+>>> 46) Move FreeCell 4♡ => Column4
 >>> 47) Move Column2 7♣ onto Column6 8♡ : 2 cards
 >>> 48) Automove Column2 2♢ => Foundation
 >>> 49) Move Column2 9♣ onto Column5 10♡ : 1 cards
 >>> 50) Move Column2 3♣ onto Column4 4♡ : 1 cards
 >>> 51) Move Column3 8♢ onto Column5 9♣ : 1 cards
->>> 52) Move FreeCell 11♢ => <3>
+>>> 52) Move FreeCell 11♢ => Column3
 >>> 53) Move Column1 13♢ => FreeCell
 >>> 54) Move Column1 13♣ => FreeCell
 >>> 55) Move Column1 8♠ onto Column0 9♡ : 1 cards
 >>> 56) Move Column3 11♢ onto Column1 12♠ : 1 cards
->>> 57) Move FreeCell 13♢ => <3>
+>>> 57) Move FreeCell 13♢ => Column3
 >>> 58) Move Column1 12♠ onto Column3 13♢ : 2 cards
 >>> 59) Move Column2 10♠ onto Column3 11♢ : 1 cards
 >>> 60) Move Column1 8♣ onto Column2 9♢ : 1 cards
 >>> 61) Move Column1 3♡ => Foundation
->>> 62) Move FreeCell 13♣ => <1>
+>>> 62) Move FreeCell 13♣ => Column1
 >>> 63) Move Column2 9♢ onto Column3 10♠ : 2 cards
 >>> 64) Move Column2 7♡ onto Column0 8♠ : 1 cards
->>> 65) Move FreeCell 4♢ => <2>
+>>> 65) Move FreeCell 4♢ => Column2
 >>> 66) Move Column7 7♢ onto Column3 8♣ : 4 cards
 >>> 67) Move Column0 7♡ => FreeCell
 >>> 68) Move Column0 8♠ => FreeCell
@@ -121,14 +122,14 @@ Columns:
 >>> 70) Move Column4 3♣ => FreeCell
 >>> 71) Move Column4 4♡ => Foundation
 >>> 72) Move Column2 4♢ onto Column4 5♣ : 1 cards
->>> 73) Move FreeCell 9♡ => <2>
->>> 74) Move FreeCell 8♠ => <2>
->>> 75) Move FreeCell 7♡ => <2>
->>> 76) Move FreeCell 3♣ => <4>
->>> 77) Move Column0 13♡ onto Column7 empty : 4 cards
+>>> 73) Move FreeCell 9♡ => Column2
+>>> 74) Move FreeCell 8♠ => Column2
+>>> 75) Move FreeCell 7♡ => Column2
+>>> 76) Move FreeCell 3♣ => Column4
+>>> 77) Move Column0 13♡ onto Column7 Empty : 4 cards
 >>> 78) Move Column0 6♠ => Foundation
 >>> 79) Move Column2 9♡ onto Column7 10♣ : 3 cards
->>> 80) Move Column0 13♠ onto Column2 empty : 1 cards
+>>> 80) Move Column0 13♠ onto Column2 Empty : 1 cards
 >>> 81) Move Column0 3♢ => Foundation
 >>> 82) Move Column0 7♠ => Foundation
 >>> 83) Move Column0 5♡ => Foundation

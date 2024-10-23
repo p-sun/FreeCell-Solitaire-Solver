@@ -44,10 +44,6 @@ public struct Card: Hashable {
         self._isInRedEvenSequence = isRed ? value % 2 == 0 : value % 2 != 0
     }
     
-    var isRed: Bool {
-        return suit == .heart || suit == .diamond
-    }
-    
     func canBeStackedOn(_ other: Card) -> Bool {
         return _isInRedEvenSequence == other._isInRedEvenSequence && value == (other.value - 1)
     }

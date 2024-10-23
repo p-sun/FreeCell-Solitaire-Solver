@@ -19,7 +19,7 @@ final class FreeCellSolitareTest: XCTestCase {
         let board = BoardBuilder.build(
             columns: "",
             freeCells: [nil, Card(1, .heart), Card(1, .club), Card(2, .club)])
-        if let (solvedBoard, moves) = solver.solveBoard(board) {
+        if let (solvedBoard, _) = solver.solveBoard(board) {
             XCTAssertTrue(solvedBoard.isSolved)
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.heart.rawValue], 1)
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.club.rawValue], 2)
@@ -36,7 +36,7 @@ final class FreeCellSolitareTest: XCTestCase {
 3c 1c 1h
 """,
             freeCells: [nil, nil, nil, nil])
-        if let (solvedBoard, moves) = solver.solveBoard(board) {
+        if let (solvedBoard, _) = solver.solveBoard(board) {
             XCTAssertTrue(solvedBoard.isSolved)
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.heart.rawValue], 1)
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.club.rawValue], 3)
@@ -132,7 +132,7 @@ Columns:
             freeCells: [Card(3, .spade), nil, nil, nil],
             foundations: ["c":1, "d":2, "h":0, "s":1],
             isFullDeck: true)
-        if let (solvedBoard, moves) = solver.solveBoard(board, updatedColumns: [0, 6]) {
+        if let (solvedBoard, _) = solver.solveBoard(board, updatedColumns: [0, 6]) {
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.heart.rawValue], 13)
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.spade.rawValue], 13)
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.diamond.rawValue], 13)
@@ -172,7 +172,7 @@ Columns:
 """,
             freeCells: [Card(10, .spade), Card(11,.spade), nil, nil],
             foundations: ["c":10, "d":13, "h":4, "s":5])
-        if let (solvedBoard, moves) = solver.solveBoard(board, updatedColumns: [3]) {
+        if let (solvedBoard, _) = solver.solveBoard(board, updatedColumns: [3]) {
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.heart.rawValue], 13)
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.spade.rawValue], 13)
             XCTAssertEqual(solvedBoard.foundations[Card.Suit.diamond.rawValue], 13)
@@ -212,25 +212,30 @@ ad 5s 10c qh 9h 3s
 """,
             freeCells: [nil, nil, nil, nil],
             isFullDeck: true)
-        if let (solvedBoard, moves) = solver.solveBoard(board) {
-            XCTAssertEqual(solvedBoard.foundations[Card.Suit.heart.rawValue], 13)
-            XCTAssertEqual(solvedBoard.foundations[Card.Suit.spade.rawValue], 13)
-            XCTAssertEqual(solvedBoard.foundations[Card.Suit.diamond.rawValue], 13)
-            XCTAssertEqual(solvedBoard.foundations[Card.Suit.club.rawValue], 13)
-            let expected = """
-Free Cells: - - - -
-Foundations: 13♣ 13♢ 13♡ 13♠
-Columns:
-<0> -
-<1> -
-<2> -
-<3> -
-<4> -
-<5> -
-<6> -
-<7> -
+        if let (solvedBoard, _) = solver.solveBoard(board) {
+            assertBoardIsSolved(solvedBoard)
+        } else {
+            XCTFail()
+        }
+    }
+    
+    func testSolve_fullDeck_2() {
+        let board = BoardBuilder.build(
+            columns:
 """
-            XCTAssertEqual(solvedBoard.description, expected)
+10c qs 9c 2h 9h 8c 3c
+7c 4c 7s 2c 2s ad as
+5h 3h 3s 8h 9d js kd
+ah 7d 6d 4h jh 8s 5s
+jc 5c 6s qd kh 10h
+9s 5d 6c jd qc 6h
+4s ac qh ks 3d kc
+10d 7h 2d 4d 8d 10s
+""",
+            freeCells: [nil, nil, nil, nil],
+            isFullDeck: true)
+        if let (solvedBoard, _) = solver.solveBoard(board) {
+            assertBoardIsSolved(solvedBoard)
         } else {
             XCTFail()
         }
@@ -255,5 +260,28 @@ Columns:
 7♣
 """
         XCTAssertEqual(board.hashedIdentifier, expected)
+    }
+    
+    // MARK: - Utils
+    
+    func assertBoardIsSolved(_ solvedBoard: Board) {
+        XCTAssertEqual(solvedBoard.foundations[Card.Suit.heart.rawValue], 13)
+        XCTAssertEqual(solvedBoard.foundations[Card.Suit.spade.rawValue], 13)
+        XCTAssertEqual(solvedBoard.foundations[Card.Suit.diamond.rawValue], 13)
+        XCTAssertEqual(solvedBoard.foundations[Card.Suit.club.rawValue], 13)
+        let expected = """
+Free Cells: - - - -
+Foundations: 13♣ 13♢ 13♡ 13♠
+Columns:
+<0> -
+<1> -
+<2> -
+<3> -
+<4> -
+<5> -
+<6> -
+<7> -
+"""
+        XCTAssertEqual(solvedBoard.description, expected)
     }
 }

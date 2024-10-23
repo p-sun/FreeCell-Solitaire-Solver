@@ -1,4 +1,11 @@
-public enum BoardBuilder {
+//
+//  BoardBuilder.swift
+//  Solitaire
+//
+//  Created by Paige Sun on 10/22/24.
+//
+
+public struct BoardBuilder {
     public static func build(columns columnsRaw: String,
                       freeCells: [Card?] = [nil, nil, nil, nil],
                       foundations: [Character : Int]? = nil,

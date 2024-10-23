@@ -15,7 +15,6 @@
 		9B937B542CC8477500D7C74C /* SolitaireUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B937B532CC8477500D7C74C /* SolitaireUITests.swift */; };
 		9B937B562CC8477500D7C74C /* SolitaireUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B937B552CC8477500D7C74C /* SolitaireUITestsLaunchTests.swift */; };
 		9B937B652CC8481D00D7C74C /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B937B642CC8481D00D7C74C /* Card.swift */; };
-		9B937B682CC8485800D7C74C /* Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B937B672CC8485800D7C74C /* Board.swift */; };
 		9B937B6A2CC8488E00D7C74C /* SolitareSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B937B692CC8488E00D7C74C /* SolitareSolver.swift */; };
 		9B937B6C2CC84B1800D7C74C /* BoardBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B937B6B2CC84B1800D7C74C /* BoardBuilder.swift */; };
 		9B937B6E2CC84C3E00D7C74C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9B937B6D2CC84C3E00D7C74C /* README.md */; };
@@ -50,7 +49,6 @@
 		9B937B532CC8477500D7C74C /* SolitaireUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolitaireUITests.swift; sourceTree = "<group>"; };
 		9B937B552CC8477500D7C74C /* SolitaireUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolitaireUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		9B937B642CC8481D00D7C74C /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
-		9B937B672CC8485800D7C74C /* Board.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Board.swift; sourceTree = "<group>"; };
 		9B937B692CC8488E00D7C74C /* SolitareSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolitareSolver.swift; sourceTree = "<group>"; };
 		9B937B6B2CC84B1800D7C74C /* BoardBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardBuilder.swift; sourceTree = "<group>"; };
 		9B937B6D2CC84C3E00D7C74C /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -108,7 +106,6 @@
 				9B937B382CC8477400D7C74C /* SolitaireApp.swift */,
 				9B937B3A2CC8477400D7C74C /* ContentView.swift */,
 				9B937B642CC8481D00D7C74C /* Card.swift */,
-				9B937B672CC8485800D7C74C /* Board.swift */,
 				9B937B6B2CC84B1800D7C74C /* BoardBuilder.swift */,
 				9B937B692CC8488E00D7C74C /* SolitareSolver.swift */,
 				9B937B3C2CC8477500D7C74C /* Assets.xcassets */,
@@ -276,7 +273,6 @@
 				9B937B3B2CC8477400D7C74C /* ContentView.swift in Sources */,
 				9B937B6A2CC8488E00D7C74C /* SolitareSolver.swift in Sources */,
 				9B937B652CC8481D00D7C74C /* Card.swift in Sources */,
-				9B937B682CC8485800D7C74C /* Board.swift in Sources */,
 				9B937B6C2CC84B1800D7C74C /* BoardBuilder.swift in Sources */,
 				9B937B392CC8477400D7C74C /* SolitaireApp.swift in Sources */,
 			);
