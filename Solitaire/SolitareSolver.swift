@@ -12,7 +12,7 @@ let PRINT_DEBUG = true
 public class Board {
     let columns: [[Card]]
     let freeCells: [Card?]
-    public let foundations: [Character: Int]  // top card in the foundation
+    public let foundations: [Character: Int]  // Top card in the foundation
     
     public init(columns: [[Card]], freeCells: [Card?], foundations: [Character : Int]) {
         self.columns = columns
@@ -20,14 +20,14 @@ public class Board {
         self.foundations = foundations
     }
     
-    public var isSolved: Bool {
+    public lazy var isSolved: Bool = {
         freeCells.allSatisfy{ $0 == nil } &&
         columns.allSatisfy { $0.isEmpty }
-    }
+    }()
     
-    var firstEmptyFreeCellIndex: Int? {
+    lazy var firstEmptyFreeCellIndex: Int? = {
         freeCells.firstIndex(where: { $0 == nil })
-    }
+    }()
            
     // MARK: Columns
 
