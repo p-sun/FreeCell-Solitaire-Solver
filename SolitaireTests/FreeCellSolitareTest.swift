@@ -213,7 +213,7 @@ ad 5s 10c qh 9h 3s
 """,
             freeCells: [nil, nil, nil, nil],
             isFullDeck: true)
-        if let (solvedBoard, _) = solver.solveBoard(board) {
+        if let (solvedBoard, _) = solver.solveBoard(board, useFastSolve: true) {
             assertBoardIsSolved(solvedBoard)
         } else {
             XCTFail()
@@ -235,7 +235,29 @@ jc 5c 6s qd kh 10h
 """,
             freeCells: [nil, nil, nil, nil],
             isFullDeck: true)
-        if let (solvedBoard, _) = solver.solveBoard(board) {
+        if let (solvedBoard, _) = solver.solveBoard(board, useFastSolve: true) {
+            assertBoardIsSolved(solvedBoard)
+        } else {
+            XCTFail()
+        }
+    }
+    
+    func testSolve_fullDeck_3() {
+        let board = BoardBuilder.build(
+            columns:
+"""
+qh 8d 7s 4c 6d 2c 2d
+7d 6s qs 8c js ks 3s
+5d 10h 3h 5s 3d 3c 7c
+8s kd qc 8h 5h as ah
+kc 9h jd 9s 6c ad
+7h 9c 4h 2s 10c 4s
+jh 6h 2h 5c qd 10s
+4d 9d jc ac kh 10d
+""",
+            freeCells: [nil, nil, nil, nil],
+            isFullDeck: true)
+        if let (solvedBoard, _) = solver.solveBoard(board, useFastSolve: true) {
             assertBoardIsSolved(solvedBoard)
         } else {
             XCTFail()

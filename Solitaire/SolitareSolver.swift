@@ -297,36 +297,47 @@ public class SolitareSolver {
 
     public init() {}
     
-    open func solveBoard(_ board: Board, updatedColumns: [Int] = []) -> (Board, moves: [String])? {
+    open func solveBoard(_ board: Board, updatedColumns: [Int] = [], useFastSolve: Bool = false) -> (Board, moves: [String])? {
         if PRINT_SOLUTION { print("=========\nStart | \(board)") }
         visitedBoards = Set<String>()
-        queue = [Step(board,
-                      moves: [],
-                      updatedColumns: updatedColumns.isEmpty ? Array(board.columns.indices) : updatedColumns,
-                      mustUseColumns: [])]
         
-        var level = 0
-        while !queue.isEmpty {
-            level += 1
-            let currentSteps = queue
-            queue = []
-            for currentStep in currentSteps {
-                let (solved, nextSteps) = solveNextSteps(from: currentStep)
-                if solved {
-                    let solvedStep = nextSteps.first!
-                    if PRINT_SOLUTION { print(formattedSolution(board, solvedStep.board, solvedStep.moves)) }
-                    return (solvedStep.board, solvedStep.moves)
-                }
-                queue += nextSteps
+        let firstStep = Step(board,
+                          moves: [],
+                          updatedColumns: updatedColumns.isEmpty ? Array(board.columns.indices) : updatedColumns,
+                          mustUseColumns: [])
+        if useFastSolve { // DFS
+            let (solved, nextSteps) = solveNextSteps(from: firstStep, useFastSolve: true)
+            if solved {
+                let solvedStep = nextSteps.first!
+                if PRINT_SOLUTION { print(formattedSolution(board, solvedStep.board, solvedStep.moves)) }
+                return (solvedStep.board, solvedStep.moves)
             }
-            cleanupQueue(level: level, queue: &queue)
+        } else { // BFS
+            queue = [firstStep]
+            var level = 0
+            while !queue.isEmpty {
+                level += 1
+                let currentSteps = queue
+                queue = []
+                for currentStep in currentSteps {
+                    let (solved, nextSteps) = solveNextSteps(from: currentStep, useFastSolve: useFastSolve)
+                    if solved {
+                        let solvedStep = nextSteps.first!
+                        if PRINT_SOLUTION { print(formattedSolution(board, solvedStep.board, solvedStep.moves)) }
+                        return (solvedStep.board, solvedStep.moves)
+                    }
+                    queue += nextSteps
+                }
+                cleanupQueue(level: level, queue: &queue)
+            }
         }
+
         return nil
     }
     
     /// Find next steps after this one. Returns solved = true once a solution has been found.
-    private func solveNextSteps(from step: Step) -> (solved: Bool, [Step]) {
-//        if PRINT_DEBUG, let lastMove = step.moves.last {
+    private func solveNextSteps(from step: Step, useFastSolve: Bool) -> (solved: Bool, [Step]) {
+//        if PRINT_DEBUG, useFastSolve, let lastMove = step.moves.last {
 //             print("====== Move \(step.moves.count - 1) ======\n> \(lastMove)\nUpdatedCols: \(step.updatedColumns)\nMustUseCols: \(step.mustUseColumns)\n\(step.board)\n")
 //        }
 
@@ -363,7 +374,12 @@ public class SolitareSolver {
                     let nextBoard = board.clearFreeCell(i).addToFoundation(card)
                     let nextMoves = moves + ["Move FreeCell \(card) => Foundation"]
                     let nextStep = Step(nextBoard, moves: nextMoves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns)
-                    nextSteps.append(nextStep)
+                    if useFastSolve {
+                        let (solved, nextSteps) = solveNextSteps(from: nextStep, useFastSolve: true)
+                        if solved { return (true, nextSteps )}
+                    } else {
+                        nextSteps.append(nextStep)
+                    }
                 }
             }
         }
@@ -375,7 +391,12 @@ public class SolitareSolver {
                     let nextBoard = board.removeLastFromColumn(from).addToFoundation(card)
                     let nextMoves = moves + ["Move Column\(from) \(card) => Foundation"]
                     let nextStep = Step(nextBoard, moves: nextMoves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns.filter { $0 != from })
-                    nextSteps.append(nextStep)
+                    if useFastSolve {
+                        let (solved, nextSteps) = solveNextSteps(from: nextStep, useFastSolve: true)
+                        if solved { return (true, nextSteps )}
+                    } else {
+                        nextSteps.append(nextStep)
+                    }
                 }
             }
         }
@@ -391,7 +412,12 @@ public class SolitareSolver {
                             let nextBoard = board.clearFreeCell(i).appendToColumn(card, at: to)
                             let nextMoves = moves + ["Move FreeCell \(card) => Column\(to)"]
                             let nextStep = Step(nextBoard, moves: nextMoves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns.filter { $0 != to })
-                            nextSteps.append(nextStep)
+                            if useFastSolve {
+                                let (solved, nextSteps) = solveNextSteps(from: nextStep, useFastSolve: true)
+                                if solved { return (true, nextSteps )}
+                            } else {
+                                nextSteps.append(nextStep)
+                            }
                         }
                     }
                 }
@@ -408,7 +434,12 @@ public class SolitareSolver {
                     for to in mustUseColumns {
                         if board.columns[to].count > 0 { // To Non-Empty Column
                             if let nextStep = moveStackAndSolve(step, from: from, to: to, k: maxStackSize) {
-                                nextSteps.append(nextStep)
+                                if useFastSolve {
+                                    let (solved, nextSteps) = solveNextSteps(from: nextStep, useFastSolve: true)
+                                    if solved { return (true, nextSteps )}
+                                } else {
+                                    nextSteps.append(nextStep)
+                                }
                             }
                         }
                     }
@@ -422,7 +453,12 @@ public class SolitareSolver {
                     for to in board.columns.indices {
                         if board.columns[to].count > 0 {
                             if let nextStep = moveStackAndSolve(step, from: from, to: to, k: maxStackSize) {
-                                nextSteps.append(nextStep)
+                                if useFastSolve {
+                                    let (solved, nextSteps) = solveNextSteps(from: nextStep, useFastSolve: true)
+                                    if solved { return (true, nextSteps )}
+                                } else {
+                                    nextSteps.append(nextStep)
+                                }
                             }
                         }
                     }
@@ -440,7 +476,12 @@ public class SolitareSolver {
             let maxStackSize = board.stackSize(from: from)
             for to in board.columns.indices.filter({ board.columns[$0].isEmpty }) {
                 if let nextStep = moveStackAndSolve(step, from: from, to: to, k: maxStackSize) {
-                    nextSteps.append(nextStep)
+                    if useFastSolve {
+                        let (solved, nextSteps) = solveNextSteps(from: nextStep, useFastSolve: true)
+                        if solved { return (true, nextSteps )}
+                    } else {
+                        nextSteps.append(nextStep)
+                    }
                 }
             }
         }
@@ -460,7 +501,12 @@ public class SolitareSolver {
                             mustUseCols.append(from)
                         }
                         let nextStep = Step(nextBoard, moves: nextMoves, updatedColumns: mustUseCols, mustUseColumns: mustUseCols)
-                        nextSteps.append(nextStep)
+                        if useFastSolve {
+                            let (solved, nextSteps) = solveNextSteps(from: nextStep, useFastSolve: true)
+                            if solved { return (true, nextSteps )}
+                        } else {
+                            nextSteps.append(nextStep)
+                        }
                     }
                 }
             }
