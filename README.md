@@ -1,5 +1,7 @@
 # FreeCell-Solitaire-Solver
-A FreeCell Solitaire solver to deterministically find one of the BEST solutions for any deck, using BFS traversal. I use weighted heureistics to estimate how good a game state is from the final solution, and use that to filter the queue of possible game states for the BFS traversal. For the faster DFS that solves quicker but finds a solution requiring more moves, see the branch [Faster-DFS-Solver](https://github.com/p-sun/FreeCell-Solitaire-Solver/tree/Faster-DFS-Solver).
+A FreeCell Solitaire solver to deterministically find solutions for any deck, using one of two methods.
+  * __DFS Solve__: Find a solution for any deck. `useFastSolveSolve = true`. Faster than BFS solve.
+  * __BFS Solve__: Finds one of the BEST solutions for any deck. I use weighted heureistics to estimate how good a game state is from the final solution, and use that to filter the queue of possible game states for the BFS traversal. `useFastSolveSolve = false`
 
 I was playing FreeCell Solitare on [YouTube Playables](https://www.youtube.com/playables/Ugkxbnpb-Zfu90iTv-d_1rZA5kUiiZwUz5U3), and thought, "I wonder if I can write an algorithm to solve this?". The answer was yes! Like the game of solitare, this was a fun excercise in recursion and logic deduction. 
 
@@ -7,14 +9,15 @@ Most of the solver logic are in [SolitareSolver.swift](https://github.com/p-sun/
 
 ## Potential Next Steps
 - Refactor Board and SolitareSolver with shorter functions.
-- Pass `useBFS: Bool` as a parameter to solveBoard, and put back the DFS solver. BFS solver finds better solutions, but DFS solver is much faster.
-- Build a the UI for a Solitaire game.
+- Build UI and game controllers for the Solitaire game.
 - Test more decks.
 - Write a test to generate small games with valid moves, to find games this solver can't solve. Compare my solver's solution with generated moves to find more logical shortcuts that we can use to prioritize certain moves, or skip exploring certain moves earlier.
+- Improve the DFS solving algorithm using path compression. If we could improve the game state (e.g. merge two stacks, move card to foundation) without moving some cards, then then undo just those moves.
+- Refactor list of moves (e.g. column-to-column, column-to-foundation) and their text descriptions into an enum to reduce memory usage.
 
 ## Test Deck
 
-See [`FreeCellSolitareTest`](https://github.com/p-sun/FreeCell-Solitaire-Solver/blob/7ce07e5f39cb1bba83db589bd6acd731b48fd4ea/SolitaireTests/FreeCellSolitareTest.swift#L200)'s `testSolve_fullDeck()` for the test on this deck. The solver prints the following text, which was tested on a real game.
+See [`FreeCellSolitareTest`](https://github.com/p-sun/FreeCell-Solitaire-Solver/blob/ed3a8ed712660ea3cda500e0b44c8f5484c07b5c/SolitaireTests/FreeCellSolitareTest.swift#L263)'s `solve_fullDeck_1()` for the test on this deck. The BFS solver prints the following text, which was tested on a real game on YouTube Playables.
 
 <img src="https://github.com/user-attachments/assets/135308a6-3cea-4d1d-9b35-467b2ff8399a" width="600">
 
