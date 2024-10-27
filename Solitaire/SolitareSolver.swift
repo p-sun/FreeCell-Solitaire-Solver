@@ -7,7 +7,8 @@
 
 import Foundation
 
-let PRINT_DEBUG = true
+let PRINT_SOLUTION = true
+let PRINT_DEBUG = false
 
 public class Board {
     let columns: [[Card]]
@@ -67,38 +68,6 @@ public class Board {
             return _moveStack()
         }
     }
-    
-//    func mergeColumns(from: Int, to: Int) -> Board? {
-//        func _moveStack(k :Int) -> Board {
-//            var newCols = columns
-//            let cardsToMove = newCols[from].dropLast(k)
-//            newCols[to] += cardsToMove
-//            return Board(columns: newCols, freeCells: freeCells, foundations: foundations)
-//        }
-//
-//        let fromCol = columns[from]
-//        guard fromCol.count > 0 else {
-//            return nil
-//        }
-//
-//        let toCol = columns[to]
-//        if toCol.isEmpty {
-//            let k = stackSize(from: from)
-//            return k <= maxMovableStack(to: to) ? _moveStack(k: k) : nil
-//        } else {
-//            guard fromCol.last!.isInSameSequence(toCol.last!) else {
-//                return nil
-//            }
-//            var i = fromCol.count - 1
-//            while i - 1 >= 0 && fromCol[i].canBeStackedOn(fromCol[i - 1]) {
-//                let cardToMove = fromCol[i-1]
-//                i -= 1
-//            }
-//
-//        }
-//
-//        // TODO
-//    }
     
     // MARK: Stack on column
 
@@ -252,56 +221,138 @@ public func formattedSolution(_ board: Board, _ solvedBoard: Board, _ moves: [St
 """
 }
 
-public class SolitareSolver {
-    private var visitedBoards = Set<String>()
+/// Current solve state.
+/// - Parameters:
+///     - updatedColumns: The columns that have been updated since the last time we moved a card to a free cell.
+///     - mustUseColumns: Columns where we revealed a new card by moving a card to a free cell or an empty column, and have not used that new card yet.
+///     - moves: All the moves to get to this Step
+public struct Step {
+    public let board: Board
+    public let moves: [String]
+    public let updatedColumns: [Int]
+    public let mustUseColumns: [Int]
+    let queuePriority: Int
+    
+    public init(_ board: Board, moves: [String], updatedColumns: [Int], mustUseColumns: [Int]) {
+        self.board = board
+        self.moves = moves
+        self.updatedColumns = updatedColumns
+        self.mustUseColumns = mustUseColumns
+        self.queuePriority = estimateQueuePriority(board)
+    }
+}
 
-    public init(visitedBoards: Set<String> = Set<String>()) {
-        self.visitedBoards = visitedBoards
+// MARK: - Hand optimized weights
+// Use heurestics to estimate how close a board is to being solved.
+
+// The higher the priority, the more likely that board is closer to the actual solution.
+private func estimateQueuePriority(_ board: Board) -> Int {
+    // Heuristic 1: Maximize cards on foundations
+    let cardsInFoundation = board.foundations.values.reduce(0) { acc, val in acc + val }
+    var priority = 10 * cardsInFoundation
+    
+    // Heuristic 2: Maximize free cells and empty columns
+    priority += board.maxMovableStackToNonEmptyColumn * 5
+
+    // Heuristic 3: Penalize buried Aces and Twos
+    for col in board.columns {
+        for (depth, card) in col.reversed().enumerated() {
+            if card.value == 1 {
+                priority -= (depth + 1) * 2
+            } else if card.value == 2 {
+                priority -= (depth + 1)
+            }
+        }
     }
     
-    open func solveBoard(_ board: Board, updatedColumns: [Int] = []) -> (Board, moves: [String])? {
-        if PRINT_DEBUG { print("=========\nStart | \(board)") }
-        visitedBoards = Set<String>()
-        
-        let solved = solve(
-            board, [],
-            updatedColumns: updatedColumns.isEmpty ? Array(board.columns.indices) : updatedColumns, mustUseColumns: [])
-        if PRINT_DEBUG, let solved = solved {
-            print(formattedSolution(board, solved.0, solved.1))
-        }
-        return solved
+    // Heuristic 4: Penalize blocked cards
+    for i in board.columns.indices {
+        let stackSize = board.stackSize(from: i)
+        let blockedCards = board.columns[i].count - stackSize
+        priority -= blockedCards
     }
+    
+    return priority
+}
 
-    /// - Parameters:
-    ///     - updatedColumns: The columns that have been updated since the last time we moved a card to a free cell.
-    ///     - mustUseColumns: Columns where we revealed a new card by moving a card to a free cell or an empty column, and have not used that new card yet.
-    open func solve(_ board: Board, _ moves: [String], updatedColumns: [Int], mustUseColumns: [Int]) -> (Board, moves: [String])? {
-        if let lastMove = moves.last {
-            if PRINT_DEBUG { print("====== Move \(moves.count - 1) ======\n> \(lastMove)\nUpdatedCols: \(updatedColumns)\nMustUseCols: \(mustUseColumns)\n\(board)\n") }
+// Use step.queuePriority to trim possibilities.
+func cleanupQueue(level: Int, queue: inout [Step]) {
+    let minPri = queue.reduce(1000, { acc, step in min(acc, step.queuePriority) })
+    let maxPri = queue.reduce(0, { acc, step in max(acc, step.queuePriority ) })
+    if PRINT_SOLUTION { print("# of moves: \(level) | # of possibilities \(queue.count) | min & max priority: \(minPri), \(maxPri)") }
+    if level >= 9 && queue.count > 20000 {
+        let newMinPri = maxPri - (maxPri - minPri)*10000/queue.count
+        queue = queue.filter { step in
+            step.queuePriority >= newMinPri
         }
+        if PRINT_SOLUTION { print("Filtering steps with queuePriority < \(newMinPri). # of possibilities: \(queue.count)") }
+    }
+}
+
+// MARK: - Solitare Solver
+
+public class SolitareSolver {
+    private var visitedBoards = Set<String>()
+    private var queue = [Step]()
+
+    public init() {}
+    
+    open func solveBoard(_ board: Board, updatedColumns: [Int] = []) -> (Board, moves: [String])? {
+        if PRINT_SOLUTION { print("=========\nStart | \(board)") }
+        visitedBoards = Set<String>()
+        queue = [Step(board,
+                      moves: [],
+                      updatedColumns: updatedColumns.isEmpty ? Array(board.columns.indices) : updatedColumns,
+                      mustUseColumns: [])]
         
-//        if PRINT_DEBUG && moves.count >= 200 {
-//            print("+_+_+_+_+_+_ Too many moves\n\(board) \n\(moves.enumerated().map { i, move in "\(i) | \(move)" }.joined(separator: "\n"))")
-//            return nil
+        var level = 0
+        while !queue.isEmpty {
+            level += 1
+            let currentSteps = queue
+            queue = []
+            for currentStep in currentSteps {
+                let (solved, nextSteps) = solveNextSteps(from: currentStep)
+                if solved {
+                    let solvedStep = nextSteps.first!
+                    if PRINT_SOLUTION { print(formattedSolution(board, solvedStep.board, solvedStep.moves)) }
+                    return (solvedStep.board, solvedStep.moves)
+                }
+                queue += nextSteps
+            }
+            cleanupQueue(level: level, queue: &queue)
+        }
+        return nil
+    }
+    
+    /// Find next steps after this one. Returns solved = true once a solution has been found.
+    private func solveNextSteps(from step: Step) -> (solved: Bool, [Step]) {
+//        if PRINT_DEBUG, let lastMove = step.moves.last {
+//             print("====== Move \(step.moves.count - 1) ======\n> \(lastMove)\nUpdatedCols: \(step.updatedColumns)\nMustUseCols: \(step.mustUseColumns)\n\(step.board)\n")
 //        }
 
         // MARK: Greedy Solve
         // Free cell -> Automove to Foundation
-        let (board, moves, updatedColumns, mustUseColumns) = applyAutomovesToFoundation(board, moves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns)
-        
-        if board.isSolved {
-            return (board, moves)
+        let step = applyAutomovesToFoundation(step)
+        if step.board.isSolved {
+            return (true, [step])
         }
         
+        // MARK: Prevent cycles
         // Prevent cycles, such as moving a card from foundation to a free cell, and back.
-        let hashableBoard = board.hashedIdentifier
+        let hashableBoard = step.board.hashedIdentifier
         guard !visitedBoards.contains(hashableBoard) else {
             if PRINT_DEBUG {
                 print(">>> Undo - Already encountered board configuration.")
             }
-            return nil
+            return (false, [])
         }
         visitedBoards.insert(hashableBoard)
+        
+        let updatedColumns = step.updatedColumns
+        let mustUseColumns = step.mustUseColumns
+        let board = step.board
+        let moves = step.moves
+        var nextSteps = [Step]()
 
         // MARK: Backtracking Solve
         
@@ -311,9 +362,8 @@ public class SolitareSolver {
                 if board.canAddToFoundation(card) {
                     let nextBoard = board.clearFreeCell(i).addToFoundation(card)
                     let nextMoves = moves + ["Move FreeCell \(card) => Foundation"]
-                    if let solved = solve(nextBoard, nextMoves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns) {
-                        return solved
-                    }
+                    let nextStep = Step(nextBoard, moves: nextMoves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns)
+                    nextSteps.append(nextStep)
                 }
             }
         }
@@ -324,11 +374,8 @@ public class SolitareSolver {
                 if board.canAddToFoundation(card) {
                     let nextBoard = board.removeLastFromColumn(from).addToFoundation(card)
                     let nextMoves = moves + ["Move Column\(from) \(card) => Foundation"]
-                    if let solved = solve(
-                        nextBoard, nextMoves, updatedColumns: updatedColumns,
-                        mustUseColumns: mustUseColumns.filter { $0 != from }) {
-                        return solved
-                    }
+                    let nextStep = Step(nextBoard, moves: nextMoves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns.filter { $0 != from })
+                    nextSteps.append(nextStep)
                 }
             }
         }
@@ -343,11 +390,8 @@ public class SolitareSolver {
                         if toCol.isEmpty || card.canBeStackedOn(toCol.last!) {
                             let nextBoard = board.clearFreeCell(i).appendToColumn(card, at: to)
                             let nextMoves = moves + ["Move FreeCell \(card) => Column\(to)"]
-                            if let solved = solve(
-                                nextBoard, nextMoves, updatedColumns: updatedColumns,
-                                mustUseColumns: mustUseColumns.filter { $0 != to }) {
-                                return solved
-                            }
+                            let nextStep = Step(nextBoard, moves: nextMoves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns.filter { $0 != to })
+                            nextSteps.append(nextStep)
                         }
                     }
                 }
@@ -363,8 +407,8 @@ public class SolitareSolver {
                     let maxStackSize = board.stackSize(from: from)
                     for to in mustUseColumns {
                         if board.columns[to].count > 0 { // To Non-Empty Column
-                            if let solved = moveStackAndSolve(board, moves, from: from, to: to, k: maxStackSize, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns) {
-                                return solved
+                            if let nextStep = moveStackAndSolve(step, from: from, to: to, k: maxStackSize) {
+                                nextSteps.append(nextStep)
                             }
                         }
                     }
@@ -377,8 +421,8 @@ public class SolitareSolver {
                     let maxStackSize = board.stackSize(from: from) // TODO: May need to move smaller stack sizes
                     for to in board.columns.indices {
                         if board.columns[to].count > 0 {
-                            if let solved = moveStackAndSolve(board, moves, from: from, to: to, k: maxStackSize, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns) {
-                                return solved
+                            if let nextStep = moveStackAndSolve(step, from: from, to: to, k: maxStackSize) {
+                                nextSteps.append(nextStep)
                             }
                         }
                     }
@@ -388,20 +432,19 @@ public class SolitareSolver {
            
         if mustUseColumns.count == 2 {
             if PRINT_DEBUG { print(">>> Undo. Revealed columns \(mustUseColumns) but didn't use them.") }
-            return nil
+            return (false, [])
         }
         
         // Column -> Empty Column
         for from in updatedColumns {
             let maxStackSize = board.stackSize(from: from)
             for to in board.columns.indices.filter({ board.columns[$0].isEmpty }) {
-                if let solved = moveStackAndSolve(
-                    board, moves, from: from, to: to, k: maxStackSize, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns) {
-                    return solved
+                if let nextStep = moveStackAndSolve(step, from: from, to: to, k: maxStackSize) {
+                    nextSteps.append(nextStep)
                 }
             }
         }
-
+        
         // Column -> FreeCell
         if let emptyFreeCellIdx = board.firstEmptyFreeCellIndex {
             for from in board.columns.indices {
@@ -412,32 +455,31 @@ public class SolitareSolver {
                         stackSize > board.maxMovableStackToNonEmptyColumn {
                         let nextBoard = board.removeLastFromColumn(from).setFreeCell(card, at: emptyFreeCellIdx)
                         let nextMoves = moves + ["Move Column\(from) \(card) => FreeCell"]
-//                        let updatedCols = updatedColumns.contains(from) ? updatedColumns : updatedColumns + [from]
                         var mustUseCols = mustUseColumns
                         if !mustUseCols.contains(from) {
                             mustUseCols.append(from)
                         }
-                        if let solved = solve(nextBoard, nextMoves, updatedColumns: mustUseCols,
-                                              mustUseColumns: mustUseCols) {
-                            return solved
-                        }
+                        let nextStep = Step(nextBoard, moves: nextMoves, updatedColumns: mustUseCols, mustUseColumns: mustUseCols)
+                        nextSteps.append(nextStep)
                     }
                 }
             }
         }
         
         if PRINT_DEBUG { print(">>> Undo - No more moves.") }
-        return nil
+        return (false, nextSteps)
     }
     
     // MARK: Automove to Foundation
     
-    public func applyAutomovesToFoundation(_ board: Board, _ moves: [String], updatedColumns: [Int], mustUseColumns: [Int]) -> (board: Board, moves: [String], updatedColumns: [Int], mustUseColumns: [Int]) {
-        var board = board
-        var moves = moves
-        var updatedColumns = updatedColumns
-        var mustUseColumns = mustUseColumns
+    public func applyAutomovesToFoundation(_ step: Step) -> Step {
+        var board = step.board
+        var moves = step.moves
+        var updatedColumns = step.updatedColumns
+        var mustUseColumns = step.mustUseColumns
+        var changed = false
         while let (newBoard, newMove, updatedColumn) = automoveToFoundation(board) {
+            changed = true
             board = newBoard
             if let updatedColumn = updatedColumn {
                 if !updatedColumns.contains(updatedColumn) {
@@ -450,7 +492,11 @@ public class SolitareSolver {
                 print("> " + newMove)
             }
         }
-        return (board, moves, updatedColumns, mustUseColumns)
+        if changed {
+            let newStep = Step(board, moves: moves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns)
+            return newStep
+        }
+        return step
     }
     
     private func automoveToFoundation(_ board: Board) -> (Board, move: String, updatedColumn: Int?)? {
@@ -476,14 +522,18 @@ public class SolitareSolver {
     }
     
     // MARK: Column -> Column
-    private func moveStackAndSolve(_ board: Board, _ moves: [String], from: Int, to: Int, k: Int, updatedColumns: [Int], mustUseColumns: [Int]) -> (Board, moves: [String])? {
+    private func moveStackAndSolve(_ step: Step, from: Int, to: Int, k: Int) -> Step? {
+        let board = step.board
+        let updatedColumns = step.updatedColumns
+        let mustUseColumns = step.mustUseColumns
+        let moves = step.moves
         guard updatedColumns.contains(from) || updatedColumns.contains(to) else {
             return nil
         }
         let toEmptyCol = board.columns[to].isEmpty
         let moveFullStackToEmptyColumn = (k == board.columns[from].count) && toEmptyCol
         if from != to && !moveFullStackToEmptyColumn {
-            if let newBoard = board.moveStack(from: from, to: to, k: k) {
+            if let nextBoard = board.moveStack(from: from, to: to, k: k) {
                 let fromCol = board.columns[from]
                 let fromCard = fromCol[fromCol.count-k]
                 let toCard = board.columns[to].last?.description ?? "Empty"
@@ -500,10 +550,8 @@ public class SolitareSolver {
                 if toEmptyCol && !mustUseColumns.contains(from) {
                     mustUseColumns.insert(from, at: 0)
                 }
-                if let solved = solve(newBoard, nextMoves, updatedColumns: updatedColumns,
-                                      mustUseColumns: mustUseColumns) {
-                    return solved
-                }
+                
+                return Step(nextBoard, moves: nextMoves, updatedColumns: updatedColumns, mustUseColumns: mustUseColumns.filter { $0 != from })
             }
         }
         return nil

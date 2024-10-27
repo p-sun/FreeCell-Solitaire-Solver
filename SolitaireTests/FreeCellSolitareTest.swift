@@ -8,11 +8,12 @@ final class FreeCellSolitareTest: XCTestCase {
         let board = BoardBuilder.build(
             columns: "",
             freeCells: [nil, Card(1, .heart), Card(1, .club), Card(2, .club)])
-        let (newBoard, _, _, mustUseColumns) = solver.applyAutomovesToFoundation(board, [], updatedColumns: [], mustUseColumns: [2,3])
-        XCTAssertTrue(newBoard.isSolved)
-        XCTAssertEqual(newBoard.foundations[Card.Suit.heart.rawValue], 1)
-        XCTAssertEqual(newBoard.foundations[Card.Suit.club.rawValue], 2)
-        XCTAssertEqual(mustUseColumns, [2,3])
+        
+        let nextStep = solver.applyAutomovesToFoundation(Step(board, moves: [], updatedColumns: [], mustUseColumns: [2,3]))
+        XCTAssertTrue(nextStep.board.isSolved)
+        XCTAssertEqual(nextStep.board.foundations[Card.Suit.heart.rawValue], 1)
+        XCTAssertEqual(nextStep.board.foundations[Card.Suit.club.rawValue], 2)
+        XCTAssertEqual(nextStep.mustUseColumns, [2,3])
     }
     
     func testSolveMoving_fromFreeCells_toFoundation() {

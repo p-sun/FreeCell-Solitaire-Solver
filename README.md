@@ -1,27 +1,25 @@
 # FreeCell-Solitaire-Solver
-A FreeCell Solitaire solver written in Swift. 
+A FreeCell Solitaire solver to deterministically find one of the BEST solutions for any deck, using BFS traversal. I use weighted heureistics to estimate how good a game state is from the final solution, and use that to filter the queue of possible game states for the BFS traversal. For the faster DFS that solves quicker but finds a solution requiring more moves, see the branch [Faster-DFS-Solver](https://github.com/p-sun/FreeCell-Solitaire-Solver/tree/Faster-DFS-Solver).
 
 I was playing FreeCell Solitare on [YouTube Playables](https://www.youtube.com/playables/Ugkxbnpb-Zfu90iTv-d_1rZA5kUiiZwUz5U3), and thought, "I wonder if I can write an algorithm to solve this?". The answer was yes! Like the game of solitare, this was a fun excercise in recursion and logic deduction. 
 
 Most of the solver logic are in [SolitareSolver.swift](https://github.com/p-sun/FreeCell-Solitaire-Solver/blob/main/Solitaire/SolitareSolver.swift).
 
-## Potential next steps:
-- Rewrite the search with BFS to find a solve with the fewest number of moves.
-- For the BFS solve Prioritize solving boards with more cards in-order and already moved to the foundation.
+## Potential Next Steps
 - Refactor Board and SolitareSolver with shorter functions.
-- Refactor move and the hashableBoard into a step struct.
+- Pass `useBFS: Bool` as a parameter to solveBoard, and put back the DFS solver. BFS solver finds better solutions, but DFS solver is much faster.
 - Build a the UI for a Solitaire game.
 - Test more decks.
 - Write a test to generate small games with valid moves, to find games this solver can't solve. Compare my solver's solution with generated moves to find more logical shortcuts that we can use to prioritize certain moves, or skip exploring certain moves earlier.
 
-# Test Deck
+## Test Deck
 
 See [`FreeCellSolitareTest`](https://github.com/p-sun/FreeCell-Solitaire-Solver/blob/7ce07e5f39cb1bba83db589bd6acd731b48fd4ea/SolitaireTests/FreeCellSolitareTest.swift#L200)'s `testSolve_fullDeck()` for the test on this deck. The solver prints the following text, which was tested on a real game.
 
 <img src="https://github.com/user-attachments/assets/135308a6-3cea-4d1d-9b35-467b2ff8399a" width="600">
 
 ```
-+++++++ Solution has 121 moves +++++++
++++++++ Solution has 101 moves +++++++
 --- Original Board ---
 Free Cells: - - - -
 Foundations: 0♣ 0♢ 0♡ 0♠
@@ -49,126 +47,106 @@ Columns:
 <7> -
 
 --- Moves ---
->>> 0) Move Column4 5♢ onto Column1 6♣ : 1 cards
->>> 1) Move Column4 4♣ onto Column1 5♢ : 1 cards
->>> 2) Move Column4 6♡ onto Column2 7♣ : 2 cards
->>> 3) Move Column4 4♡ onto Column2 5♣ : 1 cards
->>> 4) Move Column4 11♡ onto Column3 12♣ : 1 cards
->>> 5) Move Column6 3♠ onto Column2 4♡ : 1 cards
->>> 6) Move Column7 2♡ onto Column2 3♠ : 1 cards
->>> 7) Automove Column7 1♣ => Foundation
->>> 8) Automove Column7 1♠ => Foundation
->>> 9) Move Column0 10♢ onto Column4 Empty : 1 cards
->>> 10) Move Column3 12♣ onto Column0 13♡ : 2 cards
->>> 11) Move Column3 6♢ => FreeCell
->>> 12) Move Column4 10♢ onto Column3 11♠ : 1 cards
->>> 13) Move FreeCell 6♢ => Column4
->>> 14) Move Column6 9♡ => FreeCell
->>> 15) Move Column6 12♡ => FreeCell
->>> 16) Move Column6 10♣ onto Column0 11♡ : 1 cards
->>> 17) Move FreeCell 9♡ => Column0
->>> 18) Move Column6 5♠ onto Column4 6♢ : 1 cards
->>> 19) Automove Column6 1♢ => Foundation
->>> 20) Move FreeCell 12♡ => Column6
->>> 21) Move Column3 11♠ onto Column6 12♡ : 2 cards
->>> 22) Move Column3 7♢ => FreeCell
->>> 23) Move Column3 11♣ => FreeCell
->>> 24) Move Column3 4♢ onto Column4 5♠ : 1 cards
->>> 25) Move Column3 9♠ onto Column6 10♢ : 1 cards
->>> 26) Move Column7 10♡ => FreeCell
->>> 27) Automove Column7 2♠ => Foundation
->>> 28) Move Column7 8♡ onto Column6 9♠ : 1 cards
->>> 29) Move FreeCell 11♣ => Column7
->>> 30) Move FreeCell 10♡ => Column7
->>> 31) Move Column2 2♡ => FreeCell
->>> 32) Move Column2 3♠ => Foundation
->>> 33) Move Column5 11♢ => FreeCell
->>> 34) Move Column5 4♠ => Foundation
->>> 35) Move Column5 8♢ onto Column3 Empty : 1 cards
->>> 36) Automove Column5 1♡ => Foundation
->>> 37) Automove FreeCell 2♡ => Foundation
->>> 38) Move Column7 11♣ onto Column5 12♢ : 2 cards
->>> 39) Move FreeCell 7♢ => Column7
->>> 40) Move Column1 6♣ onto Column7 7♢ : 3 cards
->>> 41) Move Column2 4♡ => FreeCell
->>> 42) Move Column2 5♣ => FreeCell
->>> 43) Move Column4 4♢ => FreeCell
->>> 44) Move Column4 5♠ => Foundation
->>> 45) Move FreeCell 5♣ => Column4
->>> 46) Move FreeCell 4♡ => Column4
->>> 47) Move Column2 7♣ onto Column6 8♡ : 2 cards
->>> 48) Automove Column2 2♢ => Foundation
->>> 49) Move Column2 9♣ onto Column5 10♡ : 1 cards
->>> 50) Move Column2 3♣ onto Column4 4♡ : 1 cards
->>> 51) Move Column3 8♢ onto Column5 9♣ : 1 cards
->>> 52) Move FreeCell 11♢ => Column3
->>> 53) Move Column1 13♢ => FreeCell
->>> 54) Move Column1 13♣ => FreeCell
->>> 55) Move Column1 8♠ onto Column0 9♡ : 1 cards
->>> 56) Move Column3 11♢ onto Column1 12♠ : 1 cards
->>> 57) Move FreeCell 13♢ => Column3
->>> 58) Move Column1 12♠ onto Column3 13♢ : 2 cards
->>> 59) Move Column2 10♠ onto Column3 11♢ : 1 cards
->>> 60) Move Column1 8♣ onto Column2 9♢ : 1 cards
->>> 61) Move Column1 3♡ => Foundation
->>> 62) Move FreeCell 13♣ => Column1
->>> 63) Move Column2 9♢ onto Column3 10♠ : 2 cards
->>> 64) Move Column2 7♡ onto Column0 8♠ : 1 cards
->>> 65) Move FreeCell 4♢ => Column2
->>> 66) Move Column7 7♢ onto Column3 8♣ : 4 cards
->>> 67) Move Column0 7♡ => FreeCell
->>> 68) Move Column0 8♠ => FreeCell
->>> 69) Move Column0 9♡ => FreeCell
->>> 70) Move Column4 3♣ => FreeCell
->>> 71) Move Column4 4♡ => Foundation
->>> 72) Move Column2 4♢ onto Column4 5♣ : 1 cards
->>> 73) Move FreeCell 9♡ => Column2
->>> 74) Move FreeCell 8♠ => Column2
->>> 75) Move FreeCell 7♡ => Column2
->>> 76) Move FreeCell 3♣ => Column4
->>> 77) Move Column0 13♡ onto Column7 Empty : 4 cards
->>> 78) Move Column0 6♠ => Foundation
->>> 79) Move Column2 9♡ onto Column7 10♣ : 3 cards
->>> 80) Move Column0 13♠ onto Column2 Empty : 1 cards
->>> 81) Move Column0 3♢ => Foundation
->>> 82) Move Column0 7♠ => Foundation
->>> 83) Move Column0 5♡ => Foundation
->>> 84) Move Column5 12♢ onto Column2 13♠ : 5 cards
->>> 85) Automove Column5 2♣ => Foundation
->>> 86) Automove Column4 3♣ => Foundation
->>> 87) Automove Column3 4♣ => Foundation
->>> 88) Automove Column4 4♢ => Foundation
->>> 89) Automove Column3 5♢ => Foundation
->>> 90) Automove Column4 5♣ => Foundation
->>> 91) Automove Column3 6♣ => Foundation
->>> 92) Automove Column4 6♢ => Foundation
->>> 93) Automove Column6 6♡ => Foundation
->>> 94) Automove Column3 7♢ => Foundation
->>> 95) Automove Column6 7♣ => Foundation
->>> 96) Automove Column7 7♡ => Foundation
->>> 97) Automove Column2 8♢ => Foundation
->>> 98) Automove Column3 8♣ => Foundation
->>> 99) Automove Column6 8♡ => Foundation
->>> 100) Automove Column7 8♠ => Foundation
->>> 101) Automove Column2 9♣ => Foundation
->>> 102) Automove Column3 9♢ => Foundation
->>> 103) Automove Column6 9♠ => Foundation
->>> 104) Automove Column7 9♡ => Foundation
->>> 105) Automove Column2 10♡ => Foundation
->>> 106) Automove Column3 10♠ => Foundation
->>> 107) Automove Column6 10♢ => Foundation
->>> 108) Automove Column7 10♣ => Foundation
->>> 109) Automove Column2 11♣ => Foundation
->>> 110) Automove Column3 11♢ => Foundation
->>> 111) Automove Column6 11♠ => Foundation
->>> 112) Automove Column7 11♡ => Foundation
->>> 113) Automove Column2 12♢ => Foundation
->>> 114) Automove Column3 12♠ => Foundation
->>> 115) Automove Column6 12♡ => Foundation
->>> 116) Automove Column7 12♣ => Foundation
->>> 117) Automove Column1 13♣ => Foundation
->>> 118) Automove Column2 13♠ => Foundation
->>> 119) Automove Column3 13♢ => Foundation
->>> 120) Automove Column7 13♡ => Foundation
-+++++++ 121 moves +++++++
+>>> 0) Move Column5 11♢ onto Column3 12♣ : 1 cards
+>>> 1) Move Column5 4♠ onto Column4 5♢ : 1 cards
+>>> 2) Move Column7 2♡ onto Column6 3♠ : 1 cards
+>>> 3) Automove Column7 1♣ => Foundation
+>>> 4) Automove Column7 1♠ => Foundation
+>>> 5) Move Column7 10♡ => FreeCell
+>>> 6) Automove Column7 2♠ => Foundation
+>>> 7) Move Column2 7♣ onto Column7 8♡ : 1 cards
+>>> 8) Move Column2 2♢ => FreeCell
+>>> 9) Move Column5 8♢ onto Column2 9♣ : 1 cards
+>>> 10) Automove Column5 1♡ => Foundation
+>>> 11) Automove Column6 2♡ => Foundation
+>>> 12) Move Column6 3♠ => Foundation
+>>> 13) Move Column5 12♢ => FreeCell
+>>> 14) Automove Column5 2♣ => Foundation
+>>> 15) Move FreeCell 10♡ => Column5
+>>> 16) Move Column2 9♣ onto Column5 10♡ : 2 cards
+>>> 17) Move FreeCell 2♢ => Column2
+>>> 18) Move Column6 9♡ => FreeCell
+>>> 19) Move Column6 12♡ => FreeCell
+>>> 20) Move Column6 10♣ onto Column3 11♢ : 1 cards
+>>> 21) Move Column6 5♠ => FreeCell
+>>> 22) Automove Column6 1♢ => Foundation
+>>> 23) Automove Column2 2♢ => Foundation
+>>> 24) Automove Column2 3♣ => Foundation
+>>> 25) Move FreeCell 9♡ => Column6
+>>> 26) Move Column6 9♡ onto Column3 10♣ : 1 cards
+>>> 27) Move Column2 10♠ onto Column6 Empty : 1 cards
+>>> 28) Move Column2 9♢ onto Column6 10♠ : 1 cards
+>>> 29) Move Column4 4♠ => FreeCell
+>>> 30) Move FreeCell 4♠ => Foundation
+>>> 31) Move FreeCell 5♠ => Foundation
+>>> 32) Move Column4 5♢ onto Column1 6♣ : 1 cards
+>>> 33) Move Column4 4♣ => Foundation
+>>> 34) Move Column4 6♡ onto Column7 7♣ : 2 cards
+>>> 35) Move Column4 4♡ onto Column7 5♣ : 1 cards
+>>> 36) Move Column6 10♠ onto Column4 11♡ : 2 cards
+>>> 37) Move Column1 6♣ onto Column2 7♡ : 2 cards
+>>> 38) Move Column1 13♢ onto Column6 Empty : 1 cards
+>>> 39) Move Column1 13♣ => FreeCell
+>>> 40) Move Column1 8♠ onto Column3 9♡ : 1 cards
+>>> 41) Move Column1 12♠ onto Column6 13♢ : 1 cards
+>>> 42) Move Column1 8♣ onto Column4 9♢ : 1 cards
+>>> 43) Automove Column1 3♡ => Foundation
+>>> 44) Move FreeCell 13♣ => Column1
+>>> 45) Move Column7 4♡ => FreeCell
+>>> 46) Move FreeCell 4♡ => Foundation
+>>> 47) Move Column7 5♣ => Foundation
+>>> 48) Move Column2 5♢ => FreeCell
+>>> 49) Move Column2 6♣ => Foundation
+>>> 50) Move Column2 7♡ onto Column3 8♠ : 1 cards
+>>> 51) Move FreeCell 12♡ => Column2
+>>> 52) Move Column2 12♡ onto Column1 13♣ : 1 cards
+>>> 53) Move Column0 10♢ => FreeCell
+>>> 54) Move Column0 13♡ onto Column2 Empty : 1 cards
+>>> 55) Move Column0 6♠ => Foundation
+>>> 56) Move Column0 13♠ => FreeCell
+>>> 57) Automove Column0 3♢ => Foundation
+>>> 58) Move Column0 7♠ => Foundation
+>>> 59) Move Column0 5♡ => Foundation
+>>> 60) Move FreeCell 13♠ => Column0
+>>> 61) Move FreeCell 12♢ => Column0
+>>> 62) Move Column3 7♡ => FreeCell
+>>> 63) Move Column3 8♠ => Foundation
+>>> 64) Move Column7 6♡ => FreeCell
+>>> 65) Move FreeCell 6♡ => Foundation
+>>> 66) Move FreeCell 7♡ => Foundation
+>>> 67) Move Column7 7♣ => Foundation
+>>> 68) Move Column7 8♡ => Foundation
+>>> 69) Move Column3 9♡ => FreeCell
+>>> 70) Move FreeCell 9♡ => Foundation
+>>> 71) Move Column3 12♣ onto Column2 13♡ : 3 cards
+>>> 72) Move Column3 6♢ onto Column7 Empty : 1 cards
+>>> 73) Move Column3 11♠ onto Column0 12♢ : 1 cards
+>>> 74) Move Column3 7♢ onto Column4 8♣ : 1 cards
+>>> 75) Move Column3 11♣ onto Column1 12♡ : 1 cards
+>>> 76) Automove Column3 4♢ => Foundation
+>>> 77) Automove FreeCell 5♢ => Foundation
+>>> 78) Automove Column7 6♢ => Foundation
+>>> 79) Automove Column4 7♢ => Foundation
+>>> 80) Automove Column4 8♣ => Foundation
+>>> 81) Automove Column5 8♢ => Foundation
+>>> 82) Automove Column3 9♠ => Foundation
+>>> 83) Automove Column4 9♢ => Foundation
+>>> 84) Automove Column5 9♣ => Foundation
+>>> 85) Automove FreeCell 10♢ => Foundation
+>>> 86) Automove Column2 10♣ => Foundation
+>>> 87) Automove Column4 10♠ => Foundation
+>>> 88) Automove Column5 10♡ => Foundation
+>>> 89) Automove Column0 11♠ => Foundation
+>>> 90) Automove Column1 11♣ => Foundation
+>>> 91) Automove Column2 11♢ => Foundation
+>>> 92) Automove Column4 11♡ => Foundation
+>>> 93) Automove Column0 12♢ => Foundation
+>>> 94) Automove Column1 12♡ => Foundation
+>>> 95) Automove Column2 12♣ => Foundation
+>>> 96) Automove Column6 12♠ => Foundation
+>>> 97) Automove Column0 13♠ => Foundation
+>>> 98) Automove Column1 13♣ => Foundation
+>>> 99) Automove Column2 13♡ => Foundation
+>>> 100) Automove Column6 13♢ => Foundation
++++++++ 101 moves +++++++
 ```
